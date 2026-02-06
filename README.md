@@ -39,21 +39,21 @@ This backend provides an autonomous PM coordination layer that uses 4 specialize
 ### Agent Workflow
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                                 Agent Orchestration                                                   │
-├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│  Project State → [All Agents Run in Parallel] → [Reporting Agent Aggregates Insights] → [Return Consolidated Output] │
-├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                                 Agent Orchestration                                                           │
+├───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  Project State → [All Agents Run in Parallel] → [Reporting Agent Aggregates Insights] → [Return Consolidated Output]          │
+├───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │  ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐  │
-│  │  Planning   │   │ Coordination│   │    Risk     │   │  Reporting  │   │  Orchestrator│   │  Data Layer │   │  LLM API    │  │
+│  │  Planning   │   │ Coordination│   │    Risk     │   │  Reporting  │   │  Orchestrator│   │  Data Layer │   │  LLM API   │  │
 │  │   Agent     │   │   Agent     │   │   Agent     │   │   Agent     │   │             │   │             │   │             │  │
 │  │             │   │             │   │             │   │             │   │             │   │             │   │             │  │
 │  │  Analyzes   │   │  Tracks     │   │  Monitors   │   │  Aggregates │   │  Coordinates│   │  Project    │   │  Grok       │  │
 │  │  Milestones │   │  Task       │   │  Delivery   │   │  Insights   │   │  All Agents │   │  State      │   │  Client     │  │
-│  │  Dependencies│   │  Progress   │   │  Risks      │   │  into       │   │             │   │             │   │             │  │
+│  │ Dependencies│   │  Progress   │   │  Risks      │   │  into       │   │             │   │             │   │             │  │
 │  │  Sequencing │   │  Stalls     │   │             │   │  Executive  │   │             │   │             │   │             │  │
 │  └─────────────┘   └─────────────┘   └─────────────┘   └─────────────┘   └─────────────┘   └─────────────┘   └─────────────┘  │
-└─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Project Structure

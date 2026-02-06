@@ -69,10 +69,10 @@ async def create_task(
 @router.get("/", response_model=List[dict])
 async def list_tasks(
     project_id: str,
-    status_filter: Optional[TaskStatus] = None,
+    status_filter: Optional[str] = None,
     assignee_id: Optional[str] = None,
     skip: int = 0,
-    limit: int = 50,
+    limit: int = 100,
     db: AsyncIOMotorDatabase = Depends(get_database),
 ):
     """List tasks in a project with optional filters."""

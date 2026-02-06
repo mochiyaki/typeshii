@@ -114,7 +114,7 @@ async def get_project_state(
 ):
     """
     Get full project state including tasks, milestones, risks, and recent events.
-    This is the input format expected by agents.
+    Matches ApiProjectState on frontend.
     """
     if not ObjectId.is_valid(project_id):
         raise HTTPException(status_code=400, detail="Invalid project ID")
@@ -137,17 +137,19 @@ async def get_project_state(
         milestones.append(doc)
     
     risks = []
-    async for doc in db.risks.find({"project_id": project_id, "is_resolved": False}):
+    async for doc in db.risks.find({"project_id": project_id}):
         doc["_id"] = str(doc["_id"])
         risks.append(doc)
     
-    # Get events from last 24 hours
-    yesterday = datetime.utcnow().replace(hour=0, minute=0, second=0)
+    # Get recent events
+    from datetime import timedelta
+    # Use last 7 days of events as "recent" for the UI feed
+    recent_cutoff = datetime.utcnow() - timedelta(days=7)
     recent_events = []
     async for doc in db.events.find({
         "project_id": project_id,
-        "timestamp": {"$gte": yesterday},
-    }).sort("timestamp", -1).limit(50):
+        "timestamp": {"$gte": recent_cutoff},
+    }).sort("timestamp", -1).limit(100):
         doc["_id"] = str(doc["_id"])
         recent_events.append(doc)
     

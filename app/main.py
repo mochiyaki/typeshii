@@ -54,6 +54,7 @@ async def health_check():
 app.include_router(projects_router, prefix=settings.api_prefix)
 app.include_router(tasks_router, prefix=settings.api_prefix)
 app.include_router(agents_router, prefix=settings.api_prefix)
+app.include_router(milestones_router, prefix=settings.api_prefix)
 
 
 @app.get("/")

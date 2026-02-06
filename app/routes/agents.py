@@ -1,15 +1,23 @@
 """
-Agents API routes - Trigger agent analysis.
+Agents API routes - Trigger agent analysis and ticket splitting.
 """
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
 
 from app.core.database import get_database
 from app.agents import get_orchestrator, AgentOrchestrator
+from app.agents.ticket_splitter import get_ticket_splitter, TicketSplitterAgent
 
 router = APIRouter(prefix="/projects/{project_id}/agents", tags=["agents"])
+
+
+class SplitTicketRequest(BaseModel):
+    """Request body for ticket splitting."""
+    topic: str
+    context: Optional[str] = None
 
 
 async def get_project_state(project_id: str, db: AsyncIOMotorDatabase) -> dict:
@@ -160,3 +168,44 @@ async def generate_executive_report(
         return {"report": report}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Report generation failed: {str(e)}")
+
+
+@router.post("/split-ticket", response_model=dict)
+async def split_ticket(
+    project_id: str,
+    request: SplitTicketRequest,
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    splitter: TicketSplitterAgent = Depends(get_ticket_splitter),
+):
+    """
+    Split a topic into a parent task and multiple subtasks using AI.
+    """
+    if not ObjectId.is_valid(project_id):
+        raise HTTPException(status_code=400, detail="Invalid project ID")
+
+    # Get project context for better labels
+    project = await db.projects.find_one({"_id": ObjectId(project_id)})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Get some existing labels for context
+    existing_labels = []
+    cursor = db.tasks.find({"project_id": project_id}, {"labels": 1})
+    async for doc in cursor:
+        if "labels" in doc:
+            existing_labels.extend(doc["labels"])
+    
+    project_context = {
+        "name": project.get("name"),
+        "existing_labels": list(set(existing_labels))[:20]
+    }
+
+    try:
+        result = await splitter.split_ticket(
+            topic=request.topic,
+            context=request.context,
+            project_context=project_context
+        )
+        return result.dict()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ticket splitting failed: {str(e)}")

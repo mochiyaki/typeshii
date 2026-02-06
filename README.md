@@ -45,7 +45,7 @@ This backend provides an autonomous PM coordination layer that uses 4 specialize
 │  Project State → [All Agents Run in Parallel] → [Reporting Agent Aggregates Insights] → [Return Consolidated Output]          │
 ├───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │  ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐  │
-│  │  Planning   │   │ Coordination│   │    Risk     │   │  Reporting  │   │  Orchestrator│   │  Data Layer │   │  LLM API   │  │
+│  │  Planning   │   │ Coordination│   │    Risk     │   │  Reporting  │   │ Orchestrator│   │  Data Layer │   │  LLM API    │  │
 │  │   Agent     │   │   Agent     │   │   Agent     │   │   Agent     │   │             │   │             │   │             │  │
 │  │             │   │             │   │             │   │             │   │             │   │             │   │             │  │
 │  │  Analyzes   │   │  Tracks     │   │  Monitors   │   │  Aggregates │   │  Coordinates│   │  Project    │   │  Grok       │  │

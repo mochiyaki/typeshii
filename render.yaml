@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: typeshii-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    region: oregon
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+      - key: LOG_LEVEL
+        value: info
+    autoDeploy: true

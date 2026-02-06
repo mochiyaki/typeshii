@@ -1,3 +1,4 @@
+import ssl
 import certifi
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from app.core.config import get_settings
@@ -24,18 +25,25 @@ async def connect_to_mongo():
         return
     
     try:
+        # Create SSL context with relaxed settings for cloud compatibility
+        ssl_context = ssl.create_default_context(cafile=certifi.where())
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE  # Allow self-signed certs
+        
         # Connection settings optimized for cloud deployment
         db_instance.client = AsyncIOMotorClient(
             settings.mongodb_uri,
-            maxPoolSize=20,           # Reduced for Render
-            minPoolSize=5,
-            maxIdleTimeMS=10000,      # Close idle connections faster
+            maxPoolSize=10,
+            minPoolSize=1,
+            maxIdleTimeMS=5000,
             serverSelectionTimeoutMS=10000,
             connectTimeoutMS=10000,
             socketTimeoutMS=30000,
             retryWrites=True,
             retryReads=True,
-            tlsCAFile=certifi.where(),  # Use certifi CA bundle
+            tls=True,
+            tlsAllowInvalidCertificates=True,
+            tlsAllowInvalidHostnames=True,
         )
         db_instance.db = db_instance.client[settings.database_name]
         

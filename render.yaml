@@ -9,6 +9,12 @@ services:
     envVars:
       - key: MONGODB_URI
         sync: false
+      - key: GROK_API_KEY
+        sync: false
+      - key: GROK_MODEL
+        value: grok-4-1-fast-reasoning
+      - key: DATABASE_NAME
+        value: typeshii
       - key: ENVIRONMENT
         value: production
       - key: LOG_LEVEL

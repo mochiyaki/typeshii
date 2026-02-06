@@ -24,13 +24,18 @@ async def connect_to_mongo():
         return
     
     try:
+        # Connection settings optimized for cloud deployment
         db_instance.client = AsyncIOMotorClient(
             settings.mongodb_uri,
-            maxPoolSize=50,
-            minPoolSize=10,
-            maxIdleTimeMS=30000,
+            maxPoolSize=20,           # Reduced for Render
+            minPoolSize=5,
+            maxIdleTimeMS=10000,      # Close idle connections faster
             serverSelectionTimeoutMS=10000,
-            tlsCAFile=certifi.where(),  # Use certifi CA bundle for SSL
+            connectTimeoutMS=10000,
+            socketTimeoutMS=30000,
+            retryWrites=True,
+            retryReads=True,
+            tlsCAFile=certifi.where(),  # Use certifi CA bundle
         )
         db_instance.db = db_instance.client[settings.database_name]
         

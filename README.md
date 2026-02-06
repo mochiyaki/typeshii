@@ -2,6 +2,8 @@
 
 AI-powered project management coordination system built with FastAPI, MongoDB, and Grok (xAI).
 
+Demo link (hosted on lovable): https://pulse-project-assist.lovable.app/
+
 ## Overview
 
 This backend provides an autonomous PM coordination layer that uses 4 specialized AI agents to:
@@ -12,26 +14,46 @@ This backend provides an autonomous PM coordination layer that uses 4 specialize
 
 **Core Principle**: The system owns delivery awareness and process optimization, NOT implementation or content decisions.
 
-## Architecture
+## System Architecture
+
+### High-Level Architecture Diagram
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     FastAPI Application                      │
-├─────────────────────────────────────────────────────────────┤
-│  Routes                                                      │
-│  ├── /api/v1/projects/      → Project CRUD                  │
-│  ├── /api/v1/projects/{id}/tasks/  → Task CRUD              │
-│  └── /api/v1/projects/{id}/agents/ → Agent Triggers         │
-├─────────────────────────────────────────────────────────────┤
-│  Agents (Grok-powered)                                       │
-│  ├── PlanningAgent      → Milestone/dependency analysis     │
-│  ├── CoordinationAgent  → Task flow & handoffs              │
-│  ├── RiskAgent          → Delivery risk detection           │
-│  └── ReportingAgent     → Stakeholder summaries             │
-├─────────────────────────────────────────────────────────────┤
-│  Data Layer                                                  │
-│  └── MongoDB (async via Motor)                               │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                        PM Agentic Workflow System                        │
+├──────────────────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐   ┌─────────────┐   ┌─────────────┐    │
+│  │   Frontend  │  │   API Layer │   │   Agents    │   │   Data Layer│    │
+│  │             │  │             │   │             │   │             │    │
+│  │  Web App    │─▶│  FastAPI   │──▶│  Planning   │─▶│  MongoDB    │    │
+│  │  Mobile     │  │  Routes     │   │ Coordination│   │  (Motor)    │    │
+│  │  Dashboard  │  │             │   │  Risk       │   │             │    │
+│  └─────────────┘  │             │   │  Reporting  │   │             │    │
+│                   │             │   │             │   │             │    │
+│                   │             │   │             │   │             │    │
+│                   │             │   │             │   │             │    │
+│                   └─────────────┘   └─────────────┘   └─────────────┘    │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+### Agent Workflow
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                                 Agent Orchestration                                                   │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  Project State → [All Agents Run in Parallel] → [Reporting Agent Aggregates Insights] → [Return Consolidated Output] │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐  │
+│  │  Planning   │   │ Coordination│   │    Risk     │   │  Reporting  │   │  Orchestrator│   │  Data Layer │   │  LLM API    │  │
+│  │   Agent     │   │   Agent     │   │   Agent     │   │   Agent     │   │             │   │             │   │             │  │
+│  │             │   │             │   │             │   │             │   │             │   │             │   │             │  │
+│  │  Analyzes   │   │  Tracks     │   │  Monitors   │   │  Aggregates │   │  Coordinates│   │  Project    │   │  Grok       │  │
+│  │  Milestones │   │  Task       │   │  Delivery   │   │  Insights   │   │  All Agents │   │  State      │   │  Client     │  │
+│  │  Dependencies│   │  Progress   │   │  Risks      │   │  into       │   │             │   │             │   │             │  │
+│  │  Sequencing │   │  Stalls     │   │             │   │  Executive  │   │             │   │             │   │             │  │
+│  └─────────────┘   └─────────────┘   └─────────────┘   └─────────────┘   └─────────────┘   └─────────────┘   └─────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Project Structure
@@ -51,7 +73,8 @@ app/
 │   ├── coordination.py    # Coordination Agent
 │   ├── risk.py            # Risk Agent
 │   ├── reporting.py       # Reporting Agent
-│   └── orchestrator.py    # Agent coordinator
+│   ├── orchestrator.py    # Agent coordinator
+│   └── ticket_splitter.py # Ticket splitting agent
 └── routes/
     ├── projects.py        # Project endpoints
     ├── tasks.py           # Task endpoints
@@ -137,6 +160,7 @@ Response: { "status": "healthy", "version": "1.0.0", "database": "connected" }
 | POST | `/projects/{id}/agents/analyze` | Run ALL agents |
 | POST | `/projects/{id}/agents/analyze/{agent}` | Run specific agent |
 | POST | `/projects/{id}/agents/report` | Generate executive report |
+| POST | `/projects/{id}/agents/split-ticket` | Split topic into subtasks |
 
 Valid agent names: `planning`, `coordination`, `risk`, `reporting`
 
@@ -190,8 +214,10 @@ Valid agent names: `planning`, `coordination`, `risk`, `reporting`
   "risks": ["risk description"],
   "recommendations": [
     {
-      "action": "string",
-      "priority": "low|medium|high",
+      "title": "string",
+      "priority": "low|medium|high|critical",
+      "category": "string",
+      "suggestion": "string",
       "reasoning": "string",
       "affected_entities": ["id"]
     }

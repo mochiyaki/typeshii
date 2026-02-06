@@ -280,5 +280,12 @@ Currently no authentication. Add JWT/OAuth as needed for production.
 ### WebSocket (Future)
 Consider adding WebSocket for real-time agent updates.
 
+## Sponsor tools used
+- render (api)
+- intercom (physical location)
+- lovable (hosted webpage)
+- composio (api)
+- you-com (api - search)
+
 ## License
 MIT

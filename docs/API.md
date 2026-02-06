@@ -100,7 +100,38 @@ Update a milestone.
 ## AI Agents 🤖
 
 ### POST /api/v1/projects/{id}/agents/analyze
-Run all agents and return `Record<string, ApiAgentOutput>`.
+Run all agents.
+**Response**:
+```json
+{
+  "planning": { ... },
+  "coordination": { ... },
+  "risk": { ... },
+  "reporting": { ... },
+  "insights": [
+    {
+      "title": "Punchy header",
+      "priority": "high",
+      "category": "risk",
+      "suggestion": "Specific action",
+      "reasoning": "Why it matters",
+      "affected_entities": ["id1"]
+    }
+  ]
+}
+```
+
+---
+
+## Users 👥
+
+### GET /api/v1/users/
+List mock users (for name resolution in UI).
+
+---
+
+### GET /api/v1/users/{id}
+Get user details.
 
 ---
 

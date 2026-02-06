@@ -78,26 +78,35 @@ class BaseAgent(ABC):
         """Parse LLM output into structured recommendations."""
         recommendations = []
         
-        # Simple parsing - look for action patterns
+        # Split by empty lines or "---" if present, otherwise process line by line
         lines = raw_text.split("\n")
         current_rec = None
         
         for line in lines:
             line = line.strip()
-            if line.startswith("ACTION:") or line.startswith("- ACTION:"):
+            if not line:
+                continue
+                
+            if line.startswith("TITLE:") or line.startswith("- TITLE:"):
                 if current_rec:
                     recommendations.append(current_rec)
                 current_rec = AgentRecommendation(
-                    action=line.replace("ACTION:", "").replace("- ", "").strip(),
+                    title=line.replace("TITLE:", "").replace("- ", "").strip(),
                     priority="medium",
+                    category="risk",  # Default
+                    suggestion="",
                     reasoning="",
                     affected_entities=[],
                 )
             elif current_rec:
                 if line.startswith("PRIORITY:"):
                     priority = line.replace("PRIORITY:", "").strip().lower()
-                    if priority in ["low", "medium", "high"]:
+                    if priority in ["low", "medium", "high", "critical"]:
                         current_rec.priority = priority
+                elif line.startswith("CATEGORY:"):
+                    current_rec.category = line.replace("CATEGORY:", "").strip().lower()
+                elif line.startswith("SUGGESTION:"):
+                    current_rec.suggestion = line.replace("SUGGESTION:", "").strip()
                 elif line.startswith("REASON:") or line.startswith("REASONING:"):
                     current_rec.reasoning = line.split(":", 1)[1].strip()
                 elif line.startswith("AFFECTS:"):
@@ -106,5 +115,5 @@ class BaseAgent(ABC):
         
         if current_rec:
             recommendations.append(current_rec)
-        
+            
         return recommendations

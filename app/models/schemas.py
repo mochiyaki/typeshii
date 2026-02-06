@@ -217,10 +217,12 @@ class ProjectInDB(ProjectBase, TimestampMixin):
 # --- Agent Output Models ---
 
 class AgentRecommendation(BaseModel):
-    """Structured recommendation from an agent."""
-    action: str
-    priority: str  # "low", "medium", "high"
-    reasoning: str
+    """Structured recommendation from an agent for the UI."""
+    title: str
+    priority: str  # "low", "medium", "high", "critical"
+    category: str  # "planning", "coordination", "risk", "performance"
+    suggestion: str  # What the user should actually do
+    reasoning: str  # Detailed impact/background
     affected_entities: List[str] = Field(default_factory=list)
 
 

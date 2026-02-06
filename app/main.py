@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
 from app.core.database import connect_to_mongo, close_mongo_connection, is_db_connected
-from app.routes import projects_router, tasks_router, agents_router, milestones_router
+from app.routes import projects_router, tasks_router, agents_router, milestones_router, users_router
 
 settings = get_settings()
 
@@ -55,6 +55,7 @@ app.include_router(projects_router, prefix=settings.api_prefix)
 app.include_router(tasks_router, prefix=settings.api_prefix)
 app.include_router(agents_router, prefix=settings.api_prefix)
 app.include_router(milestones_router, prefix=settings.api_prefix)
+app.include_router(users_router, prefix=settings.api_prefix)
 
 
 @app.get("/")

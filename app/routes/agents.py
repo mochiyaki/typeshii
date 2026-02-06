@@ -1,11 +1,12 @@
 """
 Agents API routes - Trigger agent analysis and ticket splitting.
 """
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
+from datetime import datetime
 
 from app.core.database import get_database
 from app.agents import get_orchestrator, AgentOrchestrator
@@ -46,7 +47,6 @@ async def get_project_state(project_id: str, db: AsyncIOMotorDatabase) -> dict:
         doc["_id"] = str(doc["_id"])
         risks.append(doc)
     
-    from datetime import datetime
     yesterday = datetime.utcnow().replace(hour=0, minute=0, second=0)
     recent_events = []
     async for doc in db.events.find({
@@ -73,9 +73,6 @@ async def run_full_analysis(
 ):
     """
     Run all agents on the project and return comprehensive analysis.
-    
-    Returns:
-        Dict with outputs from all agents (planning, coordination, risk, reporting)
     """
     project_state = await get_project_state(project_id, db)
     
@@ -83,24 +80,42 @@ async def run_full_analysis(
         results = await orchestrator.run_full_analysis(project_state)
         
         # Convert to serializable format
-        return {
+        response = {
             agent_name: {
-                "agent_name": output.agent_name,
-                "status_summary": output.status_summary,
-                "risks": output.risks,
+                "agent_name": getattr(output, 'agent_name', str(output)),
+                "status_summary": getattr(output, 'status_summary', ''),
+                "risks": getattr(output, 'risks', []),
                 "recommendations": [
                     {
-                        "action": rec.action,
+                        "title": rec.title,
                         "priority": rec.priority,
+                        "category": rec.category,
+                        "suggestion": rec.suggestion,
                         "reasoning": rec.reasoning,
                         "affected_entities": rec.affected_entities,
                     }
-                    for rec in output.recommendations
+                    for rec in getattr(output, 'recommendations', [])
                 ],
-                "generated_at": output.generated_at.isoformat(),
+                "generated_at": getattr(output, 'generated_at', datetime.utcnow()).isoformat(),
             }
-            for agent_name, output in results.items()
+            for agent_name, output in results.items() if agent_name != "insights"
         }
+        
+        # Add the consolidated insights list for the dashboard panel
+        if "insights" in results:
+            response["insights"] = [
+                {
+                    "title": rec.title,
+                    "priority": rec.priority,
+                    "category": rec.category,
+                    "suggestion": rec.suggestion,
+                    "reasoning": rec.reasoning,
+                    "affected_entities": rec.affected_entities,
+                }
+                for rec in results["insights"]
+            ]
+            
+        return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Agent analysis failed: {str(e)}")
 
@@ -114,8 +129,6 @@ async def run_single_agent(
 ):
     """
     Run a specific agent on the project.
-    
-    Valid agent names: planning, coordination, risk, reporting
     """
     valid_agents = ["planning", "coordination", "risk", "reporting"]
     if agent_name.lower() not in valid_agents:
@@ -135,8 +148,10 @@ async def run_single_agent(
             "risks": output.risks,
             "recommendations": [
                 {
-                    "action": rec.action,
+                    "title": rec.title,
                     "priority": rec.priority,
+                    "category": rec.category,
+                    "suggestion": rec.suggestion,
                     "reasoning": rec.reasoning,
                     "affected_entities": rec.affected_entities,
                 }
@@ -156,11 +171,7 @@ async def generate_executive_report(
     db: AsyncIOMotorDatabase = Depends(get_database),
     orchestrator: AgentOrchestrator = Depends(get_orchestrator),
 ):
-    """
-    Generate a comprehensive executive report using all agents.
-    
-    This runs all agents and produces a formatted stakeholder summary.
-    """
+    """Generate comprehensive executive report."""
     project_state = await get_project_state(project_id, db)
     
     try:
@@ -177,18 +188,14 @@ async def split_ticket(
     db: AsyncIOMotorDatabase = Depends(get_database),
     splitter: TicketSplitterAgent = Depends(get_ticket_splitter),
 ):
-    """
-    Split a topic into a parent task and multiple subtasks using AI.
-    """
+    """Split a topic into tasks."""
     if not ObjectId.is_valid(project_id):
         raise HTTPException(status_code=400, detail="Invalid project ID")
 
-    # Get project context for better labels
     project = await db.projects.find_one({"_id": ObjectId(project_id)})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    # Get some existing labels for context
     existing_labels = []
     cursor = db.tasks.find({"project_id": project_id}, {"labels": 1})
     async for doc in cursor:

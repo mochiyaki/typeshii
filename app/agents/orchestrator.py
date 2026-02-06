@@ -45,6 +45,17 @@ class AgentOrchestrator:
             self.risk_agent.analyze(project_state),
         )
         
+        # Consolidation for the dashboard's "AI Insights" panel
+        all_recs = (
+            planning_output.recommendations + 
+            coordination_output.recommendations + 
+            risk_output.recommendations
+        )
+        
+        # Prioritization: critical -> high -> medium -> low
+        priority_map = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+        all_recs.sort(key=lambda x: priority_map.get(x.priority.lower(), 10))
+        
         # Reporting agent runs after to include other agents' insights
         reporting_output = await self.reporting_agent.analyze(project_state)
         
@@ -53,6 +64,7 @@ class AgentOrchestrator:
             "coordination": coordination_output,
             "risk": risk_output,
             "reporting": reporting_output,
+            "insights": all_recs  # Flat list of prioritized insights for the dashboard
         }
     
     async def run_single_agent(

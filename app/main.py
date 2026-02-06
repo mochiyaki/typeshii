@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
 from app.core.database import connect_to_mongo, close_mongo_connection, is_db_connected
-from app.routes import projects_router, tasks_router, agents_router
+from app.routes import projects_router, tasks_router, agents_router, milestones_router
 
 settings = get_settings()
 
